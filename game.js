@@ -63,6 +63,7 @@ function art(r, p, x, y, ps, k = 1) {
 }
 // banda en el suelo
 function band(a, b, z0, z1, c, al = 1) {
+  z0 = Math.max(z0, -2); z1 = Math.max(z1, -2); if (z1 <= z0) return;
   const y0 = sy(z0), y1 = sy(z1), xa0 = X(a, z0), xb0 = X(b, z0), xa1 = X(a, z1), xb1 = X(b, z1);
   g.fillStyle(fg(c, z0), al);
   g.fillTriangle(xa0, y0, xb0, y0, xb1, y1);
@@ -70,6 +71,7 @@ function band(a, b, z0, z1, c, al = 1) {
 }
 // pared vertical a lo largo de la calle (l fijo, z0..z1, alturas h0..h1)
 function wall(l, z0, z1, h0, h1, c, al = 1, nf = 0) {
+  z0 = Math.max(z0, -2); z1 = Math.max(z1, -2); if (z1 <= z0) return;
   const s0 = sc(z0), s1 = sc(z1), y0 = sy(z0), y1 = sy(z1), x0 = X(l, z0), x1 = X(l, z1);
   g.fillStyle(nf ? c : fg(c, z0), al);
   g.fillTriangle(x0, y0 - h0 * s0, x1, y1 - h0 * s1, x1, y1 - h1 * s1);
@@ -77,6 +79,7 @@ function wall(l, z0, z1, h0, h1, c, al = 1, nf = 0) {
 }
 // techo horizontal a altura h
 function roof(a, b, z0, z1, h, c, al = 1, nf = 0) {
+  z0 = Math.max(z0, -2); z1 = Math.max(z1, -2); if (z1 <= z0) return;
   const s0 = sc(z0), s1 = sc(z1), y0 = sy(z0) - h * s0, y1 = sy(z1) - h * s1;
   const xa0 = X(a, z0), xb0 = X(b, z0), xa1 = X(a, z1), xb1 = X(b, z1);
   g.fillStyle(nf ? c : fg(c, z0), al);
@@ -202,7 +205,7 @@ function create() {
   const st = T(400, 452, 'PRESIONA START', 26, S, '#1d1147');
   Z.tweens.add({ targets: st, alpha: 0.25, duration: 500, yoyo: true, repeat: -1 });
   const h1 = T(400, 508, 'IZQ/DER: carril   ARRIBA o BTN1: salto   ABAJO o BTN2: deslizar', 13, C, '#1d1147');
-  const h2 = T(400, 534, 'Junta RAM, esquiva cable cars y sobrevive a CHAQUETA DE CUERO', 13, Wt, '#1d1147');
+  const h2 = T(400, 534, 'Cada RAM que juntas sube el precio. Sobrevive a CHAQUETA DE CUERO', 13, Wt, '#1d1147');
   txM = [title, sub, lh, lbM, st, h1, h2];
   const nh = T(400, 56, 'TU NICKNAME', 34, S, '#ff2bd6');
   nickTx = T(400, 118, '_', 46, Y);
@@ -290,9 +293,8 @@ function play(dt) {
   R.sp = (7 + Math.min(R.t * 0.12, 8.5)) * (ox ? 1.25 : 1);
   R.sd += R.sp * dt; R.score += R.sp * dt * 6 * (ox ? 2 : 1);
   R.ox = Math.max(0, R.ox - dt); R.mg = Math.max(0, R.mg - dt);
-  R.ram *= 1 + dt * 0.012;
   R.ht += dt;
-  if (R.ht > 0.6) { R.ht = 0; R.up = R.ram >= R.last; R.last = R.ram; R.hist.push(R.ram); R.hist.shift(); }
+  if (R.ht > 0.6) { R.ht = 0; R.up = R.ram > R.last ? true : R.ram < R.last ? false : R.up; R.last = R.ram; R.hist.push(R.ram); R.hist.shift(); }
   const dn = Math.floor(R.t / 30);
   if (dn > R.dn) { R.dn = dn; if (!R.ev && !R.boss) say(DIST[dn % DIST.length], '#ffffff'); }
 
@@ -302,7 +304,7 @@ function play(dt) {
   }
   if (R.ev) {
     R.evL -= dt;
-    if (R.ev === 'b') { R.ram *= 1 + dt * 0.3; R.bT -= dt; if (R.bT <= 0) { R.bT = 0.28; coins(ri(-1, 1), 34, ri(3, 5), 0); } }
+    if (R.ev === 'b') { R.bT -= dt; if (R.bT <= 0) { R.bT = 0.28; coins(ri(-1, 1), 34, ri(3, 5), 0); } }
     else {
       R.pT -= dt;
       if (R.pT <= 0) { R.pT = 0.35 + Math.random() * 0.35; R.E.push(phantom(ri(-1, 1), ri(14, 26))); if (Math.random() < 0.35) R.E.push({ k: 'x', l: ri(-1, 1), z: ri(14, 26), h: 0 }); }
@@ -333,6 +335,7 @@ function play(dt) {
     } else if (e.k === 'c') {
       if (Math.abs(R.jy - e.h) < 55) {
         e.d = 1; const v = Math.round(R.ram / 10) * (R.ox > 0 ? 2 : 1); R.score += v; sfx('c');
+        R.ram *= R.ev === 'b' ? 1.1 : 1.03; Z.tweens.killTweensOf(hR); hR.setScale(1); Z.tweens.add({ targets: hR, scale: 1.18, duration: 70, yoyo: true });
         pop(X(e.l, 0), GY - 110, '+' + v, '#39ff88');
       }
     } else if (e.k === 'x') {
@@ -503,11 +506,12 @@ function draw() {
     const z0 = Math.max(-2, n * BL - fr), z1 = n * BL - fr + BL, gi = par + n, al = gi & 1, zm = (z0 + z1) / 2, s = sc(zm);
     band(-2.1, -1.55, z0, z1, al ? 0xd2cabd : 0xc8c0b3); band(1.55, 2.1, z0, z1, al ? 0xd2cabd : 0xc8c0b3);
     band(-1.6, -1.52, z0, z1, 0x8a8478); band(1.52, 1.6, z0, z1, 0x8a8478);
-    band(-1.52, 1.52, z0, z1, al ? 0x77736d : 0x6c6963);
-    for (const l of [-1, 0, 1]) {
-      band(l - 0.2, l - 0.14, z0, z1, 0xe9edf5); band(l + 0.14, l + 0.2, z0, z1, 0xe9edf5);
-      if (!al) band(l - 0.34, l + 0.34, z0, z0 + 0.4, 0x6b4a32);
-    }
+    band(-1.52, 1.52, z0, z1, al ? 0x4f4d57 : 0x55535e);
+    band(-0.5, 0.5, z0, z1, al ? 0x8c867b : 0x948e82);
+    band(-0.2, -0.14, z0, z1, 0xe9edf5); band(0.14, 0.2, z0, z1, 0xe9edf5);
+    if (!al) band(-0.36, 0.36, z0, z0 + 0.4, 0x6b4a32);
+    if (al) { band(-0.55, -0.49, z0, z1, 0xf4f1ff, 0.75); band(0.49, 0.55, z0, z1, 0xf4f1ff, 0.75); }
+    band(-2.1, -1.55, z0, z0 + 0.07, 0xa59d8c); band(1.55, 2.1, z0, z0 + 0.07, 0xa59d8c);
     building(-1, gi, z0, z1); building(1, gi, z0, z1);
     for (const sd of [-1, 1]) {
       const x = X(sd * 1.78, zm), y = sy(zm);
@@ -570,8 +574,9 @@ function drawP() {
 }
 
 function drawE(e) {
-  const z = e.z, s = sc(z), y0 = sy(z), l = e.l;
-  if (s > 1.9) return;
+  const z = e.z, l = e.l, car = (e.k === 'o' || e.k === 'f') && e.o === 2;
+  if (z < -1.4 && !(car && z + 3 > -2)) return;
+  const s = sc(Math.max(z, -1.4)), y0 = sy(Math.max(z, -1.4));
   let x = X(l, z), y = y0;
   if (e.thr && z > 26) { x += e.sx * Math.min(1, (z - 26) / 14); y -= (z - 26) * 30 * s; }
   let fa = Math.max(0, Math.min(1, (36 - z) / 6));
@@ -601,11 +606,13 @@ function drawE(e) {
       if (l < 0) { wall(l + ww, z, z + 3, 0, hh, 0xd9c9a3, a, 0); wall(l + ww, z + 0.4, z + 1.2, 60, 100, 0x9fd0f5, a); wall(l + ww, z + 1.8, z + 2.6, 60, 100, 0x9fd0f5, a); }
       if (l > 0) { wall(l - ww, z, z + 3, 0, hh, 0xd9c9a3, a, 0); wall(l - ww, z + 0.4, z + 1.2, 60, 100, 0x9fd0f5, a); wall(l - ww, z + 1.8, z + 2.6, 60, 100, 0x9fd0f5, a); }
       roof(l - ww, l + ww, z, z + 3, hh, 0x9b2f26, a);
+      if (z > -1.4) {
       const w = 104 * s;
       bx(x - w / 2, y - hh * s, w, hh * s, 0xf3e4c0, a); bx(x - w / 2, y - hh * s, w, 26 * s, 0xc8372d, a); bx(x - w / 2, y - 30 * s, w, 12 * s, 0xc8372d, a);
       bx(x - w / 2 + 8 * s, y - 92 * s, 36 * s, 34 * s, 0x9fd0f5, a); bx(x + w / 2 - 44 * s, y - 92 * s, 36 * s, 34 * s, 0x9fd0f5, a);
       g.fillStyle(0xffe08a, a); g.fillCircle(x - 22 * s, y - 20 * s, 7 * s); g.fillCircle(x + 22 * s, y - 20 * s, 7 * s);
       bx(x - w / 2, y - 6 * s, w, 6 * s, 0x2a2a33, a);
+      }
     } else if (o === 3) {
       const w = 130 * s, hh = 132 * s;
       bx(x - w / 2, y - hh, w, hh, 0x39ff88, a); bx(x - w / 2 + 6 * s, y - hh + 6 * s, w - 12 * s, hh - 12 * s, 0x0b1f1a, a);
