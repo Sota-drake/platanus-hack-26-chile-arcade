@@ -170,7 +170,7 @@ function refreshLB() { set(lbM, lbText(8)); set(lbO, lbText(5)); }
 
 // ---------- state ----------
 function reset() {
-  R = { t: 0, sd: 0, sp: 7, score: 0, ram: 100, mv: 1, bc: 0, last: 100, up: true, hist: [], ht: 0, lane: 0, px: 0, jy: 0, vy: 0, sl: 0, sh: 0, ox: 0, mg: 0, E: [], spT: 1.2, bT: 0, pT: 0, evT: 16, ev: null, evL: 0, bossT: 42, boss: 0, bl: 0, bt: 0, bo: 0, bx: 0, btl: 0, aS: 0, aT: 0, atk: [], tel: [], wb: 0, id: 1, dn: 0, why: '', ov: 0, fl: 0 };
+  R = { t: 0, sd: 0, sp: 7, score: 0, ram: 0, nr: 0, mv: 1, bc: 0, last: 0, up: true, hist: [], ht: 0, lane: 0, px: 0, jy: 0, vy: 0, sl: 0, sh: 0, ox: 0, mg: 0, E: [], spT: 1.2, bT: 0, pT: 0, evT: 16, ev: null, evL: 0, bossT: 42, boss: 0, bl: 0, bt: 0, bo: 0, bx: 0, btl: 0, aS: 0, aT: 0, atk: [], tel: [], wb: 0, id: 1, dn: 0, why: '', ov: 0, fl: 0 };
   for (let i = 0; i < 40; i++) R.hist.push(40 + i * 1.5 + Math.random() * 6);
 }
 function showPhase(p) {
@@ -180,7 +180,7 @@ function showPhase(p) {
   if (p !== 'play' && p !== 'pause') { bossTx.setVisible(false); bossLb.setVisible(false); }
 }
 function nameScr() { cur.k = -1; showPhase('name'); }
-function startRun() { reset(); showPhase('play'); say('\u00a1CORRE, ' + nick + '!', '#ffd23f'); }
+function startRun() { reset(); R.hist.fill(0); showPhase('play'); say('\u00a1CORRE, ' + nick + '!', '#ffd23f'); }
 function say(s, c) {
   ban.setText(s).setColor(c).setAlpha(1).setScale(1.3);
   Z.tweens.killTweensOf(ban);
@@ -343,8 +343,8 @@ function play(dt) {
       }
     } else if (e.k === 'c') {
       if (Math.abs(R.jy - e.h) < 55) {
-        e.d = 1; const v = Math.round(R.ram / 10 * R.mv) * (R.ox > 0 ? 2 : 1); R.score += v; sfx('c');
-        R.ram += R.ev === 'b' ? 2 + R.ram * 0.015 : 1 + R.ram * 0.005; Z.tweens.killTweensOf(hR); hR.setScale(1); Z.tweens.add({ targets: hR, scale: 1.18, duration: 70, yoyo: true });
+        e.d = 1; const v = Math.round((6 + R.nr * 0.08) * R.mv * (R.ev === 'b' ? 2 : 1) * (R.ox > 0 ? 2 : 1)); R.nr++; R.score += v; R.ram += v; sfx('c');
+        Z.tweens.killTweensOf(hR); hR.setScale(1); Z.tweens.add({ targets: hR, scale: 1.18, duration: 70, yoyo: true });
         pop(X(e.l, 0), GY - 110, '+' + v, '#39ff88');
       }
     } else if (e.k === 'x') {
