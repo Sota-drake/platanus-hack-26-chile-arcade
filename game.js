@@ -151,11 +151,16 @@ function store() {
     async set(k, v) { try { window.localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* nada */ } },
   };
 }
+function uniq(l) {
+  const m = {};
+  for (const e of l) { const k = e.n.toUpperCase(); if (!m[k] || e.s > m[k].s) m[k] = { n: k, s: e.s }; }
+  return Object.values(m).sort((a, b) => b.s - a.s).slice(0, 10);
+}
 async function load() {
   try {
     const r = await store().get(SK);
     if (!r || !r.found || !Array.isArray(r.value)) return [];
-    return r.value.filter((x) => x && typeof x.n === 'string' && typeof x.s === 'number').map((x) => ({ n: x.n.slice(0, MAXN), s: x.s })).slice(0, 10);
+    return uniq(r.value.filter((x) => x && typeof x.n === 'string' && typeof x.s === 'number').map((x) => ({ n: x.n.slice(0, MAXN), s: x.s })));
   } catch (e) { return []; }
 }
 function lbText(n) {
@@ -430,11 +435,10 @@ function die(why) {
   showPhase('over');
   set(ovR, why); set(ovS, 'PUNTAJE ' + s); set(ovP, 'guardando...');
   load().then((l) => {
-    l.push({ n: nick, s });
-    l.sort((a, b) => b.s - a.s);
-    scores = l.slice(0, 10);
-    const rk = scores.findIndex((x) => x.n === nick && x.s === s);
-    set(ovP, rk >= 0 ? '\u00a1PUESTO #' + (rk + 1) + ' EN LA TABLA!' : 'No entraste al top 10');
+    const key = nick.toUpperCase(), prev = l.find((e) => e.n === key);
+    scores = uniq(l.concat({ n: key, s }));
+    const rk = scores.findIndex((x) => x.n === key);
+    set(ovP, rk < 0 ? 'No entraste al top 10' : prev && prev.s >= s ? 'TU MEJOR: ' + prev.s + ' (PUESTO #' + (rk + 1) + ')' : (prev ? '\u00a1NUEVO R\u00c9CORD! ' : '') + '\u00a1PUESTO #' + (rk + 1) + '!');
     refreshLB();
     store().set(SK, scores);
   }).catch(() => set(ovP, ''));
@@ -491,15 +495,31 @@ function backdrop() {
   }
 }
 
+// cara frontal (mira hacia la camara) a distancia z fija, entre l=a y l=b
+function front(a, b, z, h0, h1, c, al = 1) {
+  z = Math.max(z, -2);
+  const s = sc(z), y = sy(z), xa = X(a, z), xb = X(b, z);
+  g.fillStyle(fg(c, z), al);
+  g.fillTriangle(xa, y - h0 * s, xb, y - h0 * s, xb, y - h1 * s);
+  g.fillTriangle(xa, y - h0 * s, xb, y - h1 * s, xa, y - h1 * s);
+}
+
 function building(sd, gi, z0, z1) {
   const lot = gi >> 1, r = hs(lot, sd), tw = r < 0.12, l = sd * 2.1, s = sc(z0);
   const hh = tw ? 900 : 250 + ((r * 1000 | 0) % 3) * 60;
   const col = tw ? 0x6fa3d8 : HPAL[(r * 100 | 0) % 7];
   if (!tw) wall(sd * 4, z0, z1, 0, 430, [0xb7c3dc, 0xc8bdd8, 0xd6c8b4][lot % 3]);
   wall(l, z0, z1, 0, hh, col);
+  if (!(gi & 1) && z0 > -1.2) {
+    const a = l, b = sd * 4;
+    front(a, b, z0, 0, hh, mix(col, 0xffffff, 0.15));
+    front(a, b, z0, hh - 14, hh, mix(col, 0x000000, 0.35));
+    wall(l, z0, z0 + 0.07, 0, hh, mix(col, 0x000000, 0.4));
+    if (tw && sc(z0) > 0.1) for (let f = 0; f < 9; f++) front(a + sd * 0.2, b - sd * 0.2, z0, 40 + f * 95, 90 + f * 95, 0xb8def8);
+  }
   if (!tw) { wall(l, z0, z1, hh - 12, hh, mix(col, 0x000000, 0.35)); if (hh < 330) roof(l, sd * 4, z0, z1, hh, mix(col, 0x000000, 0.3)); }
   if (s > 0.14) {
-    if (tw) { for (let f = 0; f < 9; f++) wall(l, z0 + 0.12, z1 - 0.12, 40 + f * 95, 90 + f * 95, 0xa8d6f5); }
+    if (tw) { for (let f = 0; f < 9; f++) for (const u of [0.1, 0.8]) wall(l, z0 + u, z0 + u + 0.6, 40 + f * 95, 90 + f * 95, 0xa8d6f5); }
     else {
       const fl = hh / 100 | 0;
       for (let f = 0; f < fl; f++) wall(l, z0 + 0.35, z1 - 0.35, 40 + f * 100, 95 + f * 100, hs(gi * 3 + f, sd) > 0.6 ? 0xffe9a0 : 0x3d5a80);
