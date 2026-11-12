@@ -21,7 +21,11 @@ const GR = ['ABCDEFGHIJ', 'KLMNOPQRST', 'UVWXYZ0123', '456789-<>'];
 // clase de cada obstaculo: 0 bajo (salto), 1 alto (deslizar), 2 muro (cambiar de carril)
 const CL = [0, 1, 2, 2, 1, 0];
 const WHY = ['Te chocaste con un robot de reparto', 'El letrero LED te dej\u00f3 sin cabeza', 'Te arroll\u00f3 un cable car'];
-const BL_ = ['\u00a1TE PROMET\u00cd H100 Y TE DEJ\u00c9 EN VISTO!', 'ME FUI CON OTRA IA... DOS VECES.', 'NO ES INFIDELIDAD, ES DIVERSIFICAR.', '\u00a1LA RAM ES M\u00cdA, M\u00cdA, M\u00cdA!', 'ESTO NO ES UNA BURBUJA, ES UN ECOSISTEMA.', 'TU STARTUP YA NO ESCALA. CHAO.'];
+const BS = [
+  ['\u00a1ME ECHARON DE MI EMPRESA!', 'PERO T\u00da TE VIENES CONMIGO.', 'YO SOLO QUER\u00cdA PASARLO BIEN UN RATO...', '\u00a1SABES LO DIF\u00cdCIL QUE ES HACER ESTOS CHIPS!', 'ESTO NO ES UNA BURBUJA, ES UN ECOSISTEMA.', 'SI ME VOY, ME LLEVO TODA LA RAM.'],
+  ['\u00a1VOLV\u00cd! ME RECONTRATARON... Y ME ECHARON.', 'PERO T\u00da SIGUES AC\u00c1, \u00bfNO?', 'ESTOS CHIPS NO SE HACEN SOLOS.', 'LA RAM SE ACABA. TODO SE ACABA.', 'FUE UNA BURBUJA... \u00bfY QU\u00c9?', 'ME VOY CON OTRA IA... DOS VECES.'],
+];
+const BOUT = ['ME VOY... A FUNDAR OTRA EMPRESA.', 'VOLVER\u00c9. SIEMPRE VUELVO.'];
 const DIST = ['MARKET STREET', 'SOMA', 'MISSION BAY', 'HAYES VALLEY', 'THE EMBARCADERO', 'NOB HILL', 'PRESIDIO'];
 const HPAL = [0xf2a7b8, 0x8fd3e8, 0xf7dc7a, 0xa8dca0, 0xd9b3f0, 0xf4a06a, 0xf6f0e0];
 
@@ -161,7 +165,7 @@ function refreshLB() { set(lbM, lbText(8)); set(lbO, lbText(5)); }
 
 // ---------- state ----------
 function reset() {
-  R = { t: 0, sd: 0, sp: 7, score: 0, ram: 100, mv: 1, last: 100, up: true, hist: [], ht: 0, lane: 0, px: 0, jy: 0, vy: 0, sl: 0, sh: 0, ox: 0, mg: 0, E: [], spT: 1.2, bT: 0, pT: 0, evT: 16, ev: null, evL: 0, bossT: 42, boss: 0, bl: 0, bt: 0, bo: 0, bx: 0, btl: 0, aS: 0, aT: 0, atk: [], tel: [], wb: 0, id: 1, dn: 0, why: '', ov: 0, fl: 0 };
+  R = { t: 0, sd: 0, sp: 7, score: 0, ram: 100, mv: 1, bc: 0, last: 100, up: true, hist: [], ht: 0, lane: 0, px: 0, jy: 0, vy: 0, sl: 0, sh: 0, ox: 0, mg: 0, E: [], spT: 1.2, bT: 0, pT: 0, evT: 16, ev: null, evL: 0, bossT: 42, boss: 0, bl: 0, bt: 0, bo: 0, bx: 0, btl: 0, aS: 0, aT: 0, atk: [], tel: [], wb: 0, id: 1, dn: 0, why: '', ov: 0, fl: 0 };
   for (let i = 0; i < 40; i++) R.hist.push(40 + i * 1.5 + Math.random() * 6);
 }
 function showPhase(p) {
@@ -357,7 +361,7 @@ function startEv(k) {
   else { say('ALUCINACI\u00d3N: NO CONF\u00cdES EN LO QUE VES', '#ffffff'); R.wb = 10; sfx('g'); }
 }
 function endEv() {
-  if (R.ev === 'b') { R.ram *= 0.5; R.mv *= 1.6; R.up = false; say('LA BURBUJA REVENT\u00d3: RAM -50%\nPERO CADA RAM VALE x' + R.mv.toFixed(1) + ' AHORA', '#ff2bd6'); sfx('e'); }
+  if (R.ev === 'b') { R.ram *= 0.5; R.mv *= 1.6; R.up = false; say('LA BURBUJA REVENT\u00d3: RAM -50%\nPERO CADA RAM VALE M\u00c1S AHORA', '#ff2bd6'); sfx('e'); }
   else R.E = R.E.filter((e) => e.k !== 'f' && e.k !== 'x');
   R.wb = 0; R.ev = null; R.evT = R.t + ri(15, 22);
 }
@@ -365,7 +369,7 @@ function phantom(l, z) { return { k: 'f', o: ri(0, 2), l, z, id: R.id++, age: 0,
 
 // ---------- jefe ----------
 function startBoss() {
-  R.boss = 1; R.bl = BOSS_T; R.bt = 0; R.bx = 0; R.btl = 0; R.aS = 0; R.aT = 0; R.tel = [];
+  R.bc++; R.boss = 1; R.bl = BOSS_T; R.bt = 0; R.bx = 0; R.btl = 0; R.aS = 0; R.aT = 0; R.tel = [];
   R.E = R.E.filter((e) => (e.k !== 'o' && e.k !== 'f') || e.z < 10);
   say('\u00a1CHAQUETA DE CUERO!', '#ff4d6d'); sfx('e');
 }
@@ -441,7 +445,7 @@ function hudUpd() {
   if (ph !== 'play' && ph !== 'pause') return;
   set(hS, 'PTS ' + String(Math.min(99999999, Math.floor(R.score))).padStart(6, '0'));
   const hl = R.ev === 'h' && Math.random() < 0.3;
-  set(hR, 'DDR5 $' + (hl ? ri(5, 999) : Math.round(R.ram)) + (R.mv > 1 ? ' x' + R.mv.toFixed(1) : '') + (hl ? (Math.random() < 0.5 ? ' ^' : ' v') : R.up ? ' ^' : ' v'));
+  set(hR, 'DDR5 $' + (hl ? ri(5, 999) : Math.round(R.ram)) + (hl ? (Math.random() < 0.5 ? ' ^' : ' v') : R.up ? ' ^' : ' v'));
   hR.setColor(hl ? '#ff2bd6' : R.up ? '#39ff88' : '#ff4d6d');
   set(hN, nick);
   set(hT, [R.sh ? 'ESCUDO' : '', R.ox > 0 ? 'x2 ' + Math.ceil(R.ox) + 's' : '', R.mg > 0 ? 'IMAN ' + Math.ceil(R.mg) + 's' : ''].filter(Boolean).join('   '));
@@ -477,6 +481,16 @@ function scene() {
   g.strokePath();
 }
 
+function backdrop() {
+  bx(0, HZ, W, H - HZ, 0xb9b3b6);
+  for (let i = 0, x = -10; x < W; i++) {
+    const w = 44 + (i * 29) % 37, c = mix(HPAL[(i * 3) % 7], FOG, 0.6), wc = mix(c, 0x4a5a80, 0.5), t = HZ - (i * 13) % 8;
+    bx(x, t, w - 2, 240, c); bx(x, t, w - 2, 5, mix(c, 0x000000, 0.25));
+    for (let r = 0; r < 3; r++) for (let k = 0; k < (w / 18 | 0); k++) bx(x + 6 + k * 18, t + 20 + r * 42, 8, 16, wc);
+    x += w;
+  }
+}
+
 function building(sd, gi, z0, z1) {
   const lot = gi >> 1, r = hs(lot, sd), tw = r < 0.12, l = sd * 2.1, s = sc(z0);
   const hh = tw ? 900 : 250 + ((r * 1000 | 0) % 3) * 60;
@@ -500,7 +514,7 @@ function building(sd, gi, z0, z1) {
 function draw() {
   g.clear();
   scene();
-  bx(0, HZ, W, H - HZ, 0x6a666e);
+  backdrop();
   const fr = R.sd % BL, par = Math.floor(R.sd / BL), hl = R.ev === 'h';
   for (let n = NB; n >= -1; n--) {
     const z0 = Math.max(-2, n * BL - fr), z1 = n * BL - fr + BL, gi = par + n, al = gi & 1, zm = (z0 + z1) / 2, s = sc(zm);
@@ -557,7 +571,7 @@ function drawBoss() {
   const bsx = 400 + R.bx * 110 + xo, wind = R.aS === 1 || (R.aS === 2 && R.aT > 0.15);
   if (!out || (R.t * 20 | 0) & 1) art(wind ? BOSS2 : BOSS, BP, bsx - 5 * ps, HZ - 12 * ps + Math.sin(R.t * 3) * 3 + yo, ps);
   const show = (R.boss && R.bt >= 0.8) || out;
-  set(bossTx, out ? '\u00a1ME VOY CON OTRA IA!' : BL_[Math.floor(R.bt / 2.4) % BL_.length]);
+  set(bossTx, out ? BOUT[(R.bc - 1) % 2] : BS[(R.bc - 1) % 2][Math.min(5, Math.floor(R.bt / 2.2))]);
   if (show) bx(400 - bossTx.width / 2 - 12, 64, bossTx.width + 24, 34, 0xffffff, 0.95);
   bossTx.setVisible(show && ph !== 'pause'); bossLb.setVisible(!!R.boss && ph !== 'pause');
 }
