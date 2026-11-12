@@ -445,7 +445,7 @@ function hudUpd() {
   if (ph !== 'play' && ph !== 'pause') return;
   set(hS, 'PTS ' + String(Math.min(99999999, Math.floor(R.score))).padStart(6, '0'));
   const hl = R.ev === 'h' && Math.random() < 0.3;
-  set(hR, 'DDR5 $' + (hl ? ri(5, 999) : Math.round(R.ram)) + (hl ? (Math.random() < 0.5 ? ' ^' : ' v') : R.up ? ' ^' : ' v'));
+  set(hR, 'DDR5 $' + (hl ? ri(5, 999) : Math.round(R.ram)) + '');
   hR.setColor(hl ? '#ff2bd6' : R.up ? '#39ff88' : '#ff4d6d');
   set(hN, nick);
   set(hT, [R.sh ? 'ESCUDO' : '', R.ox > 0 ? 'x2 ' + Math.ceil(R.ox) + 's' : '', R.mg > 0 ? 'IMAN ' + Math.ceil(R.mg) + 's' : ''].filter(Boolean).join('   '));
@@ -495,8 +495,9 @@ function building(sd, gi, z0, z1) {
   const lot = gi >> 1, r = hs(lot, sd), tw = r < 0.12, l = sd * 2.1, s = sc(z0);
   const hh = tw ? 900 : 250 + ((r * 1000 | 0) % 3) * 60;
   const col = tw ? 0x6fa3d8 : HPAL[(r * 100 | 0) % 7];
+  if (!tw) wall(sd * 4, z0, z1, 0, 430, [0xb7c3dc, 0xc8bdd8, 0xd6c8b4][lot % 3]);
   wall(l, z0, z1, 0, hh, col);
-  if (!tw) { wall(l, z0, z1, hh - 12, hh, mix(col, 0x000000, 0.35)); if (hh < 330) roof(l, sd * 3.8, z0, z1, hh, 0x8a8a98); }
+  if (!tw) { wall(l, z0, z1, hh - 12, hh, mix(col, 0x000000, 0.35)); if (hh < 330) roof(l, sd * 4, z0, z1, hh, mix(col, 0x000000, 0.3)); }
   if (s > 0.14) {
     if (tw) { for (let f = 0; f < 9; f++) wall(l, z0 + 0.12, z1 - 0.12, 40 + f * 95, 90 + f * 95, 0xa8d6f5); }
     else {
