@@ -335,7 +335,7 @@ function play(dt) {
     } else if (e.k === 'c') {
       if (Math.abs(R.jy - e.h) < 55) {
         e.d = 1; const v = Math.round(R.ram / 10) * (R.ox > 0 ? 2 : 1); R.score += v; sfx('c');
-        R.ram *= R.ev === 'b' ? 1.1 : 1.03; Z.tweens.killTweensOf(hR); hR.setScale(1); Z.tweens.add({ targets: hR, scale: 1.18, duration: 70, yoyo: true });
+        R.ram = Math.min(9999, R.ram * (R.ev === 'b' ? 1.06 : 1.02)); Z.tweens.killTweensOf(hR); hR.setScale(1); Z.tweens.add({ targets: hR, scale: 1.18, duration: 70, yoyo: true });
         pop(X(e.l, 0), GY - 110, '+' + v, '#39ff88');
       }
     } else if (e.k === 'x') {
@@ -422,7 +422,7 @@ function row() {
 function die(why) {
   R.why = why; R.ov = 1.2; sfx('d');
   Z.cameras.main.shake(300, 0.012); Z.cameras.main.flash(200, 255, 40, 80);
-  const s = Math.floor(R.score);
+  const s = Math.min(99999999, Math.floor(R.score));
   showPhase('over');
   set(ovR, why); set(ovS, 'PUNTAJE ' + s); set(ovP, 'guardando...');
   load().then((l) => {
@@ -439,7 +439,7 @@ function die(why) {
 // ---------- draw ----------
 function hudUpd() {
   if (ph !== 'play' && ph !== 'pause') return;
-  set(hS, 'PTS ' + String(R.score | 0).padStart(6, '0'));
+  set(hS, 'PTS ' + String(Math.min(99999999, Math.floor(R.score))).padStart(6, '0'));
   const hl = R.ev === 'h' && Math.random() < 0.3;
   set(hR, 'DDR5 $' + (hl ? ri(5, 999) : Math.round(R.ram)) + (hl ? (Math.random() < 0.5 ? ' ^' : ' v') : R.up ? ' ^' : ' v'));
   hR.setColor(hl ? '#ff2bd6' : R.up ? '#39ff88' : '#ff4d6d');
