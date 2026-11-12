@@ -409,7 +409,7 @@ function throwAtk() {
 function endBoss() {
   R.boss = 0; R.bo = 1.4; R.tel = []; R.bossT = R.t + 55; R.evT = Math.max(R.evT, R.t + 10); R.score += 1500; R.spT = 2.5;
   for (let l = -1; l <= 1; l++) coins(l, 28, 6, 0);
-  say('\u00a1DERROTADO! +1500', '#39ff88'); sfx('p');
+  say('\u00a1DERROTADO! +1500 PTS', '#ffd23f'); sfx('p');
 }
 
 function coins(l, z, n, h) { for (let i = 0; i < n; i++) R.E.push({ k: 'c', l, z: z + i * 0.9, h }); }
