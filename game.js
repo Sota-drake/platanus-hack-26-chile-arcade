@@ -161,7 +161,7 @@ function refreshLB() { set(lbM, lbText(8)); set(lbO, lbText(5)); }
 
 // ---------- state ----------
 function reset() {
-  R = { t: 0, sd: 0, sp: 7, score: 0, ram: 100, last: 100, up: true, hist: [], ht: 0, lane: 0, px: 0, jy: 0, vy: 0, sl: 0, sh: 0, ox: 0, mg: 0, E: [], spT: 1.2, bT: 0, pT: 0, evT: 16, ev: null, evL: 0, bossT: 42, boss: 0, bl: 0, bt: 0, bo: 0, bx: 0, btl: 0, aS: 0, aT: 0, atk: [], tel: [], wb: 0, id: 1, dn: 0, why: '', ov: 0, fl: 0 };
+  R = { t: 0, sd: 0, sp: 7, score: 0, ram: 100, mv: 1, last: 100, up: true, hist: [], ht: 0, lane: 0, px: 0, jy: 0, vy: 0, sl: 0, sh: 0, ox: 0, mg: 0, E: [], spT: 1.2, bT: 0, pT: 0, evT: 16, ev: null, evL: 0, bossT: 42, boss: 0, bl: 0, bt: 0, bo: 0, bx: 0, btl: 0, aS: 0, aT: 0, atk: [], tel: [], wb: 0, id: 1, dn: 0, why: '', ov: 0, fl: 0 };
   for (let i = 0; i < 40; i++) R.hist.push(40 + i * 1.5 + Math.random() * 6);
 }
 function showPhase(p) {
@@ -334,8 +334,8 @@ function play(dt) {
       }
     } else if (e.k === 'c') {
       if (Math.abs(R.jy - e.h) < 55) {
-        e.d = 1; const v = Math.round(R.ram / 10) * (R.ox > 0 ? 2 : 1); R.score += v; sfx('c');
-        R.ram = Math.min(9999, R.ram * (R.ev === 'b' ? 1.06 : 1.02)); Z.tweens.killTweensOf(hR); hR.setScale(1); Z.tweens.add({ targets: hR, scale: 1.18, duration: 70, yoyo: true });
+        e.d = 1; const v = Math.round(R.ram / 10 * R.mv) * (R.ox > 0 ? 2 : 1); R.score += v; sfx('c');
+        R.ram += R.ev === 'b' ? 2 + R.ram * 0.015 : 1 + R.ram * 0.005; Z.tweens.killTweensOf(hR); hR.setScale(1); Z.tweens.add({ targets: hR, scale: 1.18, duration: 70, yoyo: true });
         pop(X(e.l, 0), GY - 110, '+' + v, '#39ff88');
       }
     } else if (e.k === 'x') {
@@ -357,7 +357,7 @@ function startEv(k) {
   else { say('ALUCINACI\u00d3N: NO CONF\u00cdES EN LO QUE VES', '#ffffff'); R.wb = 10; sfx('g'); }
 }
 function endEv() {
-  if (R.ev === 'b') { R.ram *= 0.5; R.up = false; say('LA BURBUJA REVENT\u00d3  RAM -50%', '#ff2bd6'); sfx('e'); }
+  if (R.ev === 'b') { R.ram *= 0.5; R.mv *= 1.6; R.up = false; say('LA BURBUJA REVENT\u00d3: RAM -50%\nPERO CADA RAM VALE x' + R.mv.toFixed(1) + ' AHORA', '#ff2bd6'); sfx('e'); }
   else R.E = R.E.filter((e) => e.k !== 'f' && e.k !== 'x');
   R.wb = 0; R.ev = null; R.evT = R.t + ri(15, 22);
 }
@@ -441,7 +441,7 @@ function hudUpd() {
   if (ph !== 'play' && ph !== 'pause') return;
   set(hS, 'PTS ' + String(Math.min(99999999, Math.floor(R.score))).padStart(6, '0'));
   const hl = R.ev === 'h' && Math.random() < 0.3;
-  set(hR, 'DDR5 $' + (hl ? ri(5, 999) : Math.round(R.ram)) + (hl ? (Math.random() < 0.5 ? ' ^' : ' v') : R.up ? ' ^' : ' v'));
+  set(hR, 'DDR5 $' + (hl ? ri(5, 999) : Math.round(R.ram)) + (R.mv > 1 ? ' x' + R.mv.toFixed(1) : '') + (hl ? (Math.random() < 0.5 ? ' ^' : ' v') : R.up ? ' ^' : ' v'));
   hR.setColor(hl ? '#ff2bd6' : R.up ? '#39ff88' : '#ff4d6d');
   set(hN, nick);
   set(hT, [R.sh ? 'ESCUDO' : '', R.ox > 0 ? 'x2 ' + Math.ceil(R.ox) + 's' : '', R.mg > 0 ? 'IMAN ' + Math.ceil(R.mg) + 's' : ''].filter(Boolean).join('   '));
